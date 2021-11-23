@@ -50,7 +50,11 @@ How to Run
    In the same terminal tab 
    $ sbt
    $ sbt:surge-samples> project surge-gatling-sample
-   $ sbt:surge-gatling-sample> Gatling / test
+   $ sbt:surge-gatling-sample> Gatling / test 
+   or you can run one simulation at a time from the following command
+   $ sbt:surge-gatling-sample> Gatling / testOnly simulation.creditAccountSimulation
+   $ sbt:surge-gatling-sample> Gatling / testOnly simulation.debitAccountSimulation 
+   $ sbt:surge-gatling-sample> Gatling / testOnly simulation.createAccountSimulation  
    
    ```
   

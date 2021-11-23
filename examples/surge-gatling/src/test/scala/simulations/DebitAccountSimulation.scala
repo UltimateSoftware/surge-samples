@@ -1,42 +1,62 @@
 package simulations
 
 import io.gatling.core.Predef._
-import io.gatling.core.structure.ScenarioBuilder
+import io.gatling.core.structure.{ChainBuilder, ScenarioBuilder}
 import io.gatling.http.Predef._
 import io.gatling.http.protocol.HttpProtocolBuilder
 import org.slf4j.LoggerFactory
 
 import java.util.UUID
-import scala.concurrent.duration._
+import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
+import scala.util.Random
 
-class CreateAccountSimulation extends Simulation {
+class DebitAccountSimulation extends Simulation {
 
   private val log = LoggerFactory.getLogger(getClass)
 
   val scalaAppUrl: String = System.getenv("SCALA_APP_URL")
-
   val httpProtocol: HttpProtocolBuilder = http
     .baseUrl(scalaAppUrl)
     .header("content-Type", "application/json")
 
   private def createRequestBody(
-      initialBalance: Int
+      initialBalance: Int,
+      accountNumber: UUID
   ): String = {
     s"""{
-       |    "accountNumber": "${UUID.randomUUID()}",
+       |    "accountNumber": "$accountNumber",
        |    "accountOwner": "Jane Doe",
        |     "securityCode": "12345678910",
        |     "initialBalance": $initialBalance
        |}""".stripMargin
   }
 
+  private def debitRequestBody(initialBalance: Int): String = {
+    s"""{
+       |     "amount": $initialBalance
+       |}""".stripMargin
+  }
+
+  val debitChain: ChainBuilder = exec(
+    http("Debit Account Request")
+      .put("/bank-accounts/debit/${aggregateId}")
+      .body(StringBody(debitRequestBody(100)))
+      .check(status.is(200), bodyString.saveAs("balance"))
+  )
+    .exec(session => {
+      log.info("Account Balance after debit:")
+      log.info(session("balance").as[String])
+      session
+    })
+
   val scn: ScenarioBuilder = scenario("create user account")
     .exec(
       http("create account request")
         .post("/bank-accounts/create")
-        .body(StringBody(createRequestBody(1000)))
+        .body(StringBody(createRequestBody(10000, UUID.randomUUID())))
         .check(
+          status is (200),
           jsonPath("$.accountNumber")
             .saveAs("aggregateId")
         )
@@ -47,20 +67,11 @@ class CreateAccountSimulation extends Simulation {
       session
     })
     .pause(500 microsecond)
-    .exec(
-      http("Get Bank account state")
-        .get("/bank-accounts/${aggregateId}")
-        .check(status.is(200), bodyString.saveAs("balance"))
-    )
-    .exec(session => {
-      log.info("Account Balance:")
-      log.info(session("balance").as[String])
-      session
-    })
+    .repeat(Random.between(1, 10))(debitChain)
 
   setUp(
     scn
-      .inject(atOnceUsers(1), rampUsers(15).during(60.seconds))
+      .inject(atOnceUsers(1))
       .protocols(httpProtocol)
   )
 
