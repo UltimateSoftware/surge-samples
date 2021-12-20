@@ -16,6 +16,10 @@ jobs:
       - uses: olafurpg/setup-scala@v10
         with:
           java-version: openjdk@1.15.0
+      - name: Lint
+        run: |-
+          sbt "scalafmtCheckAll;scalafmtSbtCheck"
+          sbt scalastyle
       - name: Run sbt Tests
         run: 'sbt test'
       - name: Run Maven Tests

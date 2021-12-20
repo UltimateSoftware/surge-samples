@@ -35,5 +35,7 @@ curl -X POST -H "content-type: application/json" \
 ```
 
 To check the balance of an account:
-`curl -X GET http://localhost:8080/bank-accounts/4317c6cf-438c-4f36-8391-7b6b36a0e2d9`
+```
+curl -X GET http://localhost:8080/bank-accounts/4317c6cf-438c-4f36-8391-7b6b36a0e2d9
+```
 
