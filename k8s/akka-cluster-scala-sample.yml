@@ -23,7 +23,7 @@ spec:
     rollingUpdate:
       maxUnavailable: 0
       maxSurge: 1
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: bank-accountActorSystem
@@ -36,22 +36,11 @@ spec:
       containers:
         - name: scala-app
           image: surge-scala-sample:0.1.0-SNAPSHOT
-          imagePullPolicy: Never
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: management
-          livenessProbe:
-            httpGet:
-              path: /alive
-              port: management
+          imagePullPolicy: Never 
           ports:
             - name: remoting
               containerPort: 2552
-              protocol: TCP
-            - name: management
-              containerPort: 8558
-              protocol: TCP
+              protocol: TCP 
             - containerPort: 8080
               name: scala-app
               protocol: TCP
@@ -76,9 +65,7 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
             - name: "BANK_ACCOUNT_HOST"
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
+              value: "0.0.0.0" 
             - name: "BANK_ACCOUNT_PORT"
               value: "8080"
             - name: "KAFKA_BROKERS"
